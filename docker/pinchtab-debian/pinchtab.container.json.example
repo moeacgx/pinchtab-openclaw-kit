@@ -1,0 +1,72 @@
+{
+  "configVersion": "0.8.0",
+  "server": {
+    "port": "9867",
+    "bind": "0.0.0.0",
+    "token": "CHANGE_ME_TO_A_RANDOM_TOKEN",
+    "stateDir": "/var/lib/pinchtab",
+    "engine": ""
+  },
+  "browser": {
+    "version": "",
+    "binary": "/usr/bin/chromium",
+    "extraFlags": "--no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --disable-vulkan --use-gl=swiftshader"
+  },
+  "instanceDefaults": {
+    "mode": "headless",
+    "maxTabs": 20,
+    "stealthLevel": "light",
+    "tabEvictionPolicy": "close_lru"
+  },
+  "security": {
+    "allowEvaluate": false,
+    "allowMacro": false,
+    "allowScreencast": false,
+    "allowDownload": false,
+    "allowUpload": false,
+    "maxRedirects": -1,
+    "attach": {
+      "enabled": true,
+      "allowHosts": ["127.0.0.1", "localhost", "::1"],
+      "allowSchemes": ["ws", "wss"]
+    },
+    "idpi": {
+      "enabled": false,
+      "allowedDomains": [],
+      "strictMode": false,
+      "scanContent": false,
+      "wrapContent": false,
+      "customPatterns": [],
+      "scanTimeoutSec": 0
+    }
+  },
+  "profiles": {
+    "baseDir": "/var/lib/pinchtab/profiles",
+    "defaultProfile": "default"
+  },
+  "multiInstance": {
+    "strategy": "always-on",
+    "allocationPolicy": "fcfs",
+    "instancePortStart": 9868,
+    "instancePortEnd": 9968,
+    "restart": {
+      "maxRestarts": 20,
+      "initBackoffSec": 2,
+      "maxBackoffSec": 60,
+      "stableAfterSec": 300
+    }
+  },
+  "timeouts": {
+    "actionSec": 30,
+    "navigateSec": 60,
+    "shutdownSec": 10,
+    "waitNavMs": 1000
+  },
+  "observability": {
+    "activity": {
+      "enabled": true,
+      "sessionIdleSec": 1800,
+      "retentionDays": 1
+    }
+  }
+}
