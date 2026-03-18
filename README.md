@@ -26,6 +26,12 @@
 
 ---
 
+## 交流群
+
+- Telegram: https://t.me/vpsbbq
+
+---
+
 ## 仓库结构
 
 ```text
