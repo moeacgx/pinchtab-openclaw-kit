@@ -62,6 +62,20 @@ pinchtab-openclaw-kit/
 
 ---
 
+## 支持的宿主系统
+
+- **Ubuntu**：推荐，适配最直接
+- **CentOS / CentOS Stream**：可用，但更推荐使用仓库内置的容器方案
+- **Rocky Linux / AlmaLinux**：可用，推荐容器方案
+
+### 推荐结论
+
+无论宿主机是 Ubuntu 还是 CentOS 系，**都建议优先使用仓库里的 Debian + Chromium 容器方案**，这样可以避免宿主机直接安装 Chromium / PinchTab 时的兼容性问题。
+
+> 不建议在较老的 CentOS 7 宿主上折腾原生浏览器依赖；如果必须使用，优先走 Docker 容器。
+
+---
+
 ## 手动安装 skill
 
 ```bash
