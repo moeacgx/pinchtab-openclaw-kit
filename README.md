@@ -15,13 +15,13 @@
 直接这样说：
 
 ```text
-帮我克隆并按这个仓库的 README / 安装说明，把它完整安装到 OpenClaw 默认环境里：https://github.com/moeacgx/pinchtab-openclaw-kit
+帮我克隆这个仓库，阅读 README 和安装说明，并实际完成安装、配置和验证；如果文档里有可选项，优先使用推荐/默认方案，完成后告诉我安装结果和关键配置：https://github.com/moeacgx/pinchtab-openclaw-kit
 ```
 
-更短一点也可以：
+更口语一点也可以：
 
 ```text
-帮我把这个仓库装到 OpenClaw 里，按仓库里的安装流程自动完成配置：https://github.com/moeacgx/pinchtab-openclaw-kit
+帮我把这个仓库按 README 真正装好，不只是克隆下来；该配置的配置、该部署的部署，最后帮我验证能不能用：https://github.com/moeacgx/pinchtab-openclaw-kit
 ```
 
 ---
