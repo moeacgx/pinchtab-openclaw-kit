@@ -1,13 +1,30 @@
-# PinchTab Debian + Chromium + Optional VNC
+# PinchTab Debian + Chromium + Default VNC
 
 这个目录提供一个可直接运行的 Debian 版 PinchTab 镜像，解决 Alpine / glibc / Chromium 兼容问题。
 
-先说明一个关键点：**默认不是 VNC 启动，而是无 VNC 模式。** 默认只启动 PinchTab API，不会启动 `x11vnc` / noVNC，也不会开放 `5900` / `6080`。只有在你显式开启 `ENABLE_VNC=1`（安装脚本）或 `PINCHTAB_ENABLE_VNC=1`（直接 `docker run`）后，才会启动 `x11vnc` / noVNC 并开放对应端口。
+先说明最关键的结论：**这个仓库的默认部署就是 VNC 模式。** 默认安装脚本会启用 `ENABLE_VNC=1`，推荐的 `docker run` 也会启用 `PINCHTAB_ENABLE_VNC=1`，并默认映射 `5900` / `6080`。
+
+最常用的网页入口：
+
+```text
+http://127.0.0.1:6080/vnc.html
+```
+
+端口含义：
+
+- `5900` = 原生 VNC 客户端
+- `6080` = noVNC 网页入口
+
+补充说明：
+
+- **VNC** 的作用是给容器准备一个可视化显示环境 / 显示器
+- **有头浏览器** 会把浏览器窗口显示到这个环境里，所以你可以在 VNC / noVNC 中看到浏览器
+- 如果仍然跑的是 **headless 浏览器**，那么即使 VNC 已开启，通常也看不到浏览器窗口
 
 额外支持：
 
-- **可选 VNC 可视化登录**
-- **可选 noVNC（浏览器访问）**
+- **默认 VNC 可视化登录**
+- **默认 noVNC（浏览器访问）**
 - **适合通过 SSH 隧道远程看浏览器界面**
 
 ---
@@ -32,27 +49,9 @@ docker build -t pinchtab-debian:latest .
 
 ---
 
-## 3A. 纯后台模式运行（默认）
+## 3A. 默认运行方式：VNC / noVNC 模式
 
-这是默认模式，也就是**无 VNC 模式**：不会启动 `x11vnc` / noVNC，只提供 PinchTab API。
-
-```bash
-docker run -d --name pinchtab-debian \
-  -p 127.0.0.1:9867:9867 \
-  -v /var/lib/pinchtab:/var/lib/pinchtab \
-  -v /var/lib/pinchtab/profiles:/var/lib/pinchtab/profiles \
-  -v $(pwd)/pinchtab.container.json:/etc/pinchtab.json:ro \
-  -e PINCHTAB_CONFIG=/etc/pinchtab.json \
-  pinchtab-debian:latest
-```
-
----
-
-## 3B. 开启 VNC / noVNC 可视化模式
-
-只有显式开启下面这组参数时，才会启动 `x11vnc` / noVNC，并开放 `5900` / `6080`。
-
-你可以把“开启 VNC 模式”理解成：给容器准备好了一个可视化显示环境 / 显示器；再启动**有头浏览器**时，浏览器窗口会显示到这个环境里，因此你可以在 VNC / noVNC 中看到浏览器操作。反过来，如果仍然跑的是 **headless 浏览器**，那么即使 VNC 已开启，通常也看不到浏览器窗口。
+这是本仓库的默认推荐方式：启动 PinchTab API，同时启动 `x11vnc` / noVNC，并开放 `5900` / `6080`。
 
 ```bash
 docker run -d --name pinchtab-debian \
@@ -68,11 +67,34 @@ docker run -d --name pinchtab-debian \
   pinchtab-debian:latest
 ```
 
-端口说明（仅在显式开启 VNC 模式时开放）：
+做完 SSH 端口转发后，直接在本地浏览器打开：
 
-- `9867` → PinchTab API
-- `5900` → 原生 VNC
-- `6080` → noVNC（浏览器打开）
+```text
+http://127.0.0.1:6080/vnc.html
+```
+
+---
+
+## 3B. 如需纯后台 API 模式，可显式关闭 VNC
+
+如果你明确不需要可视化环境，而只想保留 PinchTab API，可以显式关闭：
+
+```bash
+docker run -d --name pinchtab-debian \
+  -p 127.0.0.1:9867:9867 \
+  -v /var/lib/pinchtab:/var/lib/pinchtab \
+  -v /var/lib/pinchtab/profiles:/var/lib/pinchtab/profiles \
+  -v $(pwd)/pinchtab.container.json:/etc/pinchtab.json:ro \
+  -e PINCHTAB_CONFIG=/etc/pinchtab.json \
+  -e PINCHTAB_ENABLE_VNC=0 \
+  pinchtab-debian:latest
+```
+
+此模式下：
+
+- 不会启动 `x11vnc` / noVNC
+- 不需要映射 `5900` / `6080`
+- 只提供 `9867` PinchTab API
 
 ---
 
@@ -149,14 +171,13 @@ docker restart pinchtab-debian
 docker rm -f pinchtab-debian
 ```
 
-
 ---
 
 ## 8. 登录类网站的推荐用法
 
 如果某个站点必须扫码、验证码、2FA 或人工登录，推荐这样用：
 
-1. 用 `PINCHTAB_ENABLE_VNC=1` 启动容器
+1. 直接用默认的 VNC / noVNC 模式启动容器
 2. 通过 SSH 隧道打开 noVNC / VNC
 3. 让用户手动完成登录
 4. 登录完成后不要主动退出账号

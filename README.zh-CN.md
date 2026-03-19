@@ -2,7 +2,14 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-给 OpenClaw 的浏览器能力套件：支持截图、输入、点击、文本提取、元素识别、表单填写、可选的 VNC / noVNC 登录接管、登录态复用，以及可直接落地的容器化部署方案。
+给 OpenClaw 的浏览器能力套件：支持截图、输入、点击、文本提取、元素识别、表单填写、默认启用的 VNC / noVNC 可视化部署、登录态复用，以及可直接落地的容器化部署方案。
+
+> **本仓库默认部署 = VNC 模式。** 做完 SSH 端口转发后，可直接在本地浏览器打开 **`http://127.0.0.1:6080/vnc.html`**。
+> - `5900` = 原生 VNC 客户端
+> - `6080` = noVNC 网页入口
+> - VNC 的作用是准备一个可视化显示环境
+> - 有头浏览器会把窗口画到这个环境里，所以你能在 VNC / noVNC 中看到浏览器
+> - 如果浏览器仍是 headless，即使 VNC 开着，通常也看不到浏览器窗口
 
 ## 能力一览
 
@@ -36,7 +43,7 @@
 
 1. **安装 OpenClaw skill**，让 Agent 学会如何调用 PinchTab
 2. **部署 PinchTab 容器**，提供实际浏览器运行环境
-3. **按需开启 VNC / noVNC**，用于登录接管和复杂站点处理
+3. **直接使用默认的 VNC / noVNC 部署**，这样 SSH 端口转发后马上就有浏览器入口
 4. **做一次健康检查与导航验证**，确认整条链路可用
 
 ### 方式一：让 OpenClaw 直接安装（推荐）
@@ -70,7 +77,7 @@ cp skill/pinchtab/SKILL.md /root/.openclaw/skills/pinchtab/SKILL.md
 
 - `docker/pinchtab-debian/README.md`
 
-快速版：
+快速版（默认 VNC / noVNC 部署）：
 
 ```bash
 cd docker/pinchtab-debian
@@ -81,12 +88,24 @@ docker build -t pinchtab-debian:latest .
 
 docker run -d --name pinchtab-debian \
   -p 127.0.0.1:9867:9867 \
+  -p 127.0.0.1:5900:5900 \
+  -p 127.0.0.1:6080:6080 \
   -v /var/lib/pinchtab:/var/lib/pinchtab \
   -v /var/lib/pinchtab/profiles:/var/lib/pinchtab/profiles \
   -v $(pwd)/pinchtab.container.json:/etc/pinchtab.json:ro \
   -e PINCHTAB_CONFIG=/etc/pinchtab.json \
+  -e PINCHTAB_ENABLE_VNC=1 \
+  -e VNC_PASSWORD='your-vnc-password' \
   pinchtab-debian:latest
 ```
+
+做完 SSH 端口转发后，直接在本地浏览器打开：
+
+```text
+http://127.0.0.1:6080/vnc.html
+```
+
+如果你明确只想要纯后台 API 模式，再把 `PINCHTAB_ENABLE_VNC=0`，并移除 `5900` / `6080` 端口映射即可。
 
 ## 为什么推荐容器方案
 
@@ -105,13 +124,15 @@ docker run -d --name pinchtab-debian \
 
 如果站点需要人工登录、验证码、扫码或 2FA，建议走可视化接管方案。
 
-这里先澄清一个容易误会的点：
+这里先澄清几个关键点：
 
-- **默认并不是 VNC 启动。** 默认运行方式是无 VNC 模式，只开放 PinchTab API，不会启动 `x11vnc` / noVNC，也不会开放 `5900` / `6080`。
-- **只有显式开启 `ENABLE_VNC=1` 或 `PINCHTAB_ENABLE_VNC=1` 时，** 才会启动可视化相关组件，包括 `x11vnc`、noVNC，以及 `5900` / `6080` 端口。
+- **本仓库默认部署就是 VNC 模式。** 安装脚本默认 `ENABLE_VNC=1`，推荐的 `docker run` 示例也默认设置 `PINCHTAB_ENABLE_VNC=1`，并映射 `5900` / `6080`。
 - 可以把 **“开启 VNC 模式”** 理解成：先给容器准备好一个可视化显示环境 / 显示器。
 - 可以把 **“启动有头浏览器”** 理解成：把浏览器窗口真正显示到这个显示环境里，所以你才能在 VNC / noVNC 里看到浏览器操作。
 - 如果你的流程依然使用的是 **headless 浏览器**，那即使 VNC 开着，通常也看不到浏览器窗口。
+- 通过 SSH 端口转发后，可直接在浏览器打开 **`http://127.0.0.1:6080/vnc.html`**。
+- `5900` 是给 **原生 VNC 客户端** 用的，`6080` 是给 **网页 noVNC** 用的。
+- 如果你明确不想启用可视化环境，也可以手动改成 `ENABLE_VNC=0` 或 `PINCHTAB_ENABLE_VNC=0`。
 
 详见：
 
@@ -176,7 +197,7 @@ pinchtab-openclaw-kit/
 
 - OpenClaw 的 `pinchtab` skill
 - Debian + Chromium 版 PinchTab 容器
-- 可选 VNC / noVNC 可视化登录支持
+- 默认启用的 VNC / noVNC 可视化环境
 - SSH 隧道连接说明
 - browser profile 与登录态复用工作流
 

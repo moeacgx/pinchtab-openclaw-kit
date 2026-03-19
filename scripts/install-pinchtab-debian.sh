@@ -4,7 +4,7 @@ set -euo pipefail
 BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)/docker/pinchtab-debian"
 cd "$BASE_DIR"
 
-ENABLE_VNC="${ENABLE_VNC:-0}"
+ENABLE_VNC="${ENABLE_VNC:-1}"
 VNC_PASSWORD="${VNC_PASSWORD:-changeme}"
 
 if [ ! -f pinchtab.container.json ]; then
@@ -33,12 +33,18 @@ if [ "$ENABLE_VNC" = "1" ]; then
     -e PINCHTAB_ENABLE_VNC=1
     -e VNC_PASSWORD="$VNC_PASSWORD"
   )
+else
+  ARGS+=(
+    -e PINCHTAB_ENABLE_VNC=0
+  )
 fi
 
 docker run "${ARGS[@]}" pinchtab-debian:latest
 
 echo "PinchTab Debian container started on 127.0.0.1:9867"
 if [ "$ENABLE_VNC" = "1" ]; then
-  echo "VNC enabled on 127.0.0.1:5900"
-  echo "noVNC enabled on http://127.0.0.1:6080/vnc.html"
+  echo "Default VNC mode enabled on 127.0.0.1:5900"
+  echo "Default noVNC web entry: http://127.0.0.1:6080/vnc.html"
+else
+  echo "VNC disabled explicitly; only API mode is enabled"
 fi
