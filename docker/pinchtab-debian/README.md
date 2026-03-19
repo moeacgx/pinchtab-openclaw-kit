@@ -2,6 +2,8 @@
 
 这个目录提供一个可直接运行的 Debian 版 PinchTab 镜像，解决 Alpine / glibc / Chromium 兼容问题。
 
+先说明一个关键点：**默认不是 VNC 启动，而是无 VNC 模式。** 默认只启动 PinchTab API，不会启动 `x11vnc` / noVNC，也不会开放 `5900` / `6080`。只有在你显式开启 `ENABLE_VNC=1`（安装脚本）或 `PINCHTAB_ENABLE_VNC=1`（直接 `docker run`）后，才会启动 `x11vnc` / noVNC 并开放对应端口。
+
 额外支持：
 
 - **可选 VNC 可视化登录**
@@ -32,6 +34,8 @@ docker build -t pinchtab-debian:latest .
 
 ## 3A. 纯后台模式运行（默认）
 
+这是默认模式，也就是**无 VNC 模式**：不会启动 `x11vnc` / noVNC，只提供 PinchTab API。
+
 ```bash
 docker run -d --name pinchtab-debian \
   -p 127.0.0.1:9867:9867 \
@@ -45,6 +49,10 @@ docker run -d --name pinchtab-debian \
 ---
 
 ## 3B. 开启 VNC / noVNC 可视化模式
+
+只有显式开启下面这组参数时，才会启动 `x11vnc` / noVNC，并开放 `5900` / `6080`。
+
+你可以把“开启 VNC 模式”理解成：给容器准备好了一个可视化显示环境 / 显示器；再启动**有头浏览器**时，浏览器窗口会显示到这个环境里，因此你可以在 VNC / noVNC 中看到浏览器操作。反过来，如果仍然跑的是 **headless 浏览器**，那么即使 VNC 已开启，通常也看不到浏览器窗口。
 
 ```bash
 docker run -d --name pinchtab-debian \
@@ -60,7 +68,7 @@ docker run -d --name pinchtab-debian \
   pinchtab-debian:latest
 ```
 
-端口说明：
+端口说明（仅在显式开启 VNC 模式时开放）：
 
 - `9867` → PinchTab API
 - `5900` → 原生 VNC

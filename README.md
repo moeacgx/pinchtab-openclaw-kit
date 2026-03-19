@@ -2,7 +2,7 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-Browser capabilities kit for OpenClaw: screenshots, text input, clicks, text extraction, element targeting, form filling, VNC / noVNC login handoff, session reuse, and a container-ready deployment path.
+Browser capabilities kit for OpenClaw: screenshots, text input, clicks, text extraction, element targeting, form filling, optional VNC / noVNC login handoff, session reuse, and a container-ready deployment path.
 
 ## Capabilities
 
@@ -104,6 +104,14 @@ Why:
 ## Visual login handoff (VNC / noVNC)
 
 If a site requires manual login, CAPTCHA, QR scan, or 2FA, use the visual takeover path.
+
+Important clarification:
+
+- **VNC is not enabled by default.** The default container run is a non-VNC mode: only the PinchTab API is exposed, and `x11vnc` / noVNC are not started.
+- **Only when you explicitly enable `ENABLE_VNC=1` or `PINCHTAB_ENABLE_VNC=1`** will the visual stack start, including `x11vnc`, noVNC, and ports `5900` / `6080`.
+- You can think of **"VNC mode"** as preparing a visual display environment / monitor for the container.
+- You can think of **launching a headed browser** as drawing the browser window into that display environment, so you can watch the browser actions through VNC / noVNC.
+- If your workflow still uses a **headless browser**, then even with VNC enabled, you usually will not see a browser window there.
 
 See:
 
