@@ -1,42 +1,155 @@
 # PinchTab OpenClaw Kit
 
-一个给 OpenClaw 用的浏览器能力仓库，包含：
+[English](README.md) | [中文](README.zh-CN.md)
 
-- `pinchtab` skill
-- Debian + Chromium 版 PinchTab 容器
-- 可选 VNC / noVNC 可视化登录
-- SSH 隧道连接说明
-- 登录态 / browser profile 复用工作流
+Browser capabilities kit for OpenClaw: screenshots, text input, clicks, text extraction, element targeting, form filling, VNC / noVNC login handoff, session reuse, and a container-ready deployment path.
 
----
+## Capabilities
 
-## 给 OpenClaw 的一条安装提示词
+This repository is not just an installation note. It is a practical, deployment-oriented kit that gives OpenClaw real browser execution capabilities:
 
-直接这样说：
+- **Screenshots and visual proof**: open pages, capture the current view, and send evidence back for confirmation or review
+- **Text input, clicking, and keyboard actions**: drive common UI flows for dashboards, admin panels, and operational tasks
+- **Text extraction**: pull readable content from pages for summaries, audits, collection, or downstream processing
+- **Element targeting**: identify buttons, inputs, links, and other actionable elements on real pages
+- **Form filling**: useful for login flows, search forms, publishing, submissions, and back-office data entry
+- **Login handoff**: when a site requires CAPTCHA, 2FA, QR scan, SMS, or manual confirmation, hand control to a human via **VNC / noVNC**
+- **Session reuse**: keep and reuse browser profiles after login so agents do not need to sign in every time
+- **Containerized delivery**: ship with a Debian + Chromium setup that is easier to run reliably on servers
+- **Operational troubleshooting**: documentation covers token setup, config source, browser profile reuse, visual takeover, and deployment concerns
+
+## Use Cases
+
+This kit is a good fit when OpenClaw needs an actual browser, not just HTTP requests:
+
+- **Screenshot-first workflows**: open a page, capture it, and let the user confirm before the next step
+- **Admin operations and multi-step submissions**: fill, click, select, submit, and continue through the full UI flow
+- **Content reading and extraction**: read page content, collect text, and pull out key information
+- **Sites that only work after login**: let a human complete login once, then hand the rest back to the agent
+- **CAPTCHA / 2FA / QR-based flows**: use human-in-the-loop takeover for the hard part, then resume automation
+- **Publishing and high-risk actions**: perform browser actions, then return screenshots for a second confirmation
+- **Server-side deployment**: use the container path to reduce environment drift and browser dependency pain
+
+## Installation
+
+Recommended order:
+
+1. **Install the OpenClaw skill** so the agent knows how to use PinchTab
+2. **Deploy the PinchTab container** to provide the actual browser runtime
+3. **Enable VNC / noVNC when needed** for login takeover and hard sites
+4. **Run a health check and navigation test** to verify the full chain
+
+### Option 1: Let OpenClaw install it for you
+
+You can say:
 
 ```text
-帮我克隆这个仓库，阅读 README 和安装说明，并实际完成安装、配置和验证；如果文档里有可选项，优先使用推荐/默认方案，完成后告诉我安装结果和关键配置：https://github.com/moeacgx/pinchtab-openclaw-kit
+Clone this repository, read the README and install docs, and complete the actual installation, configuration, and verification for me. If there are optional paths, prefer the recommended/default one. After that, tell me the install result and key configuration: https://github.com/moeacgx/pinchtab-openclaw-kit
 ```
 
-更口语一点也可以：
+A shorter version also works:
 
 ```text
-帮我把这个仓库按 README 真正装好，不只是克隆下来；该配置的配置、该部署的部署，最后帮我验证能不能用：https://github.com/moeacgx/pinchtab-openclaw-kit
+Please fully install this repo based on its README, not just clone it. Configure what needs configuring, deploy what needs deploying, and verify that it works at the end: https://github.com/moeacgx/pinchtab-openclaw-kit
 ```
 
----
+### Option 2: Install the skill manually
 
-## 交流群
+```bash
+mkdir -p /root/.openclaw/skills/pinchtab
+cp skill/pinchtab/SKILL.md /root/.openclaw/skills/pinchtab/SKILL.md
+```
 
-- Telegram: https://t.me/vpsbbq
+Then add `pinchtab` to the `skills` list of the agents that should use it.
 
----
+> Note: having the skill directory present does not mean it is enabled. The skill name must be added to the target agent configuration.
 
-## 仓库结构
+### Option 3: Deploy the Debian + Chromium PinchTab container manually
+
+See:
+
+- `docker/pinchtab-debian/README.md`
+
+Quick start:
+
+```bash
+cd docker/pinchtab-debian
+cp pinchtab.container.json.example pinchtab.container.json
+# edit token and other settings
+
+docker build -t pinchtab-debian:latest .
+
+docker run -d --name pinchtab-debian \
+  -p 127.0.0.1:9867:9867 \
+  -v /var/lib/pinchtab:/var/lib/pinchtab \
+  -v /var/lib/pinchtab/profiles:/var/lib/pinchtab/profiles \
+  -v $(pwd)/pinchtab.container.json:/etc/pinchtab.json:ro \
+  -e PINCHTAB_CONFIG=/etc/pinchtab.json \
+  pinchtab-debian:latest
+```
+
+## Why the container setup is recommended
+
+No matter whether the host runs Ubuntu, CentOS, Rocky, or AlmaLinux, the **Debian + Chromium container path is the recommended default**.
+
+Why:
+
+- avoids host-level browser dependency mismatches
+- reduces Alpine / glibc / Chromium compatibility issues
+- makes deployments easier to reproduce and migrate
+- is usually easier to operate and troubleshoot over time
+
+> This matters even more on older hosts such as CentOS 7. In most cases, the container path is far less painful than native browser setup.
+
+## Visual login handoff (VNC / noVNC)
+
+If a site requires manual login, CAPTCHA, QR scan, or 2FA, use the visual takeover path.
+
+See:
+
+- `docker/pinchtab-debian/README.md`
+
+Recommended flow:
+
+1. The agent checks whether human takeover is required
+2. If yes, it asks the user to open the browser through VNC / noVNC
+3. The user completes login, QR scan, CAPTCHA, or 2FA
+4. The user replies with "logged in"
+5. The agent continues the workflow
+6. The browser profile is kept so login state can be reused later
+
+Suggested prompt:
+
+```text
+This site requires login or verification. Please use VNC/noVNC to take over the browser and complete the login flow. Reply with "logged in" when done, and I will continue the automation.
+```
+
+Suggested follow-up after login:
+
+```text
+The current login state will be kept in the PinchTab browser profile and reused later, so you should not need to log in again every time.
+```
+
+## Verify
+
+```bash
+export PINCHTAB_TOKEN='your-token'
+
+curl -s -H "Authorization: Bearer $PINCHTAB_TOKEN" \
+  http://127.0.0.1:9867/health
+
+curl -s -H "Authorization: Bearer $PINCHTAB_TOKEN" \
+  -X POST http://127.0.0.1:9867/navigate \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
+
+## Repository structure
 
 ```text
 pinchtab-openclaw-kit/
 ├── README.md
+├── README.zh-CN.md
 ├── skill/
 │   └── pinchtab/
 │       └── SKILL.md
@@ -51,139 +164,14 @@ pinchtab-openclaw-kit/
     └── install-pinchtab-debian.sh
 ```
 
----
+## What is included
 
-## 它会安装什么
+- the OpenClaw `pinchtab` skill
+- a Debian + Chromium PinchTab container
+- optional VNC / noVNC visual login support
+- SSH tunnel guidance
+- browser profile and session reuse workflow
 
-- OpenClaw 的 `pinchtab` skill
-- Debian + Chromium 版 PinchTab 容器
-- 可选 VNC / noVNC 可视化接管登录
-- 登录态复用流程（优先复用 browser profile，而不是每次重登）
+## Community
 
----
-
-## 支持的宿主系统
-
-- **Ubuntu**：推荐，适配最直接
-- **CentOS / CentOS Stream**：可用，但更推荐使用仓库内置的容器方案
-- **Rocky Linux / AlmaLinux**：可用，推荐容器方案
-
-### 推荐结论
-
-无论宿主机是 Ubuntu 还是 CentOS 系，**都建议优先使用仓库里的 Debian + Chromium 容器方案**，这样可以避免宿主机直接安装 Chromium / PinchTab 时的兼容性问题。
-
-> 不建议在较老的 CentOS 7 宿主上折腾原生浏览器依赖；如果必须使用，优先走 Docker 容器。
-
----
-
-## 手动安装 skill
-
-```bash
-mkdir -p /root/.openclaw/skills/pinchtab
-cp skill/pinchtab/SKILL.md /root/.openclaw/skills/pinchtab/SKILL.md
-```
-
-然后把 `pinchtab` 加到你想启用它的 agent / 助手的 `skills` 列表。
-
-> 注意：skill 目录存在 ≠ 已启用。关键是把 skill 名写进对应 agent 的 `skills` 列表。
-
----
-
-## 手动部署 Debian Chromium 版 PinchTab
-
-见：
-
-- `docker/pinchtab-debian/README.md`
-
-快速版：
-
-```bash
-cd docker/pinchtab-debian
-cp pinchtab.container.json.example pinchtab.container.json
-# 编辑 token 等配置
-
-docker build -t pinchtab-debian:latest .
-
-docker run -d --name pinchtab-debian \
-  -p 127.0.0.1:9867:9867 \
-  -v /var/lib/pinchtab:/var/lib/pinchtab \
-  -v /var/lib/pinchtab/profiles:/var/lib/pinchtab/profiles \
-  -v $(pwd)/pinchtab.container.json:/etc/pinchtab.json:ro \
-  -e PINCHTAB_CONFIG=/etc/pinchtab.json \
-  pinchtab-debian:latest
-```
-
----
-
-## 可视化登录（VNC / noVNC）
-
-如果某些站点需要人工登录、验证码、2FA、扫码，建议启用可视化模式。
-
-详见：
-
-- `docker/pinchtab-debian/README.md`
-
-核心思路：
-
-1. 用 VNC / noVNC 接管浏览器完成登录
-2. 登录完成后回复“已登录”
-3. Agent 继续自动化后续步骤
-4. 默认保留 browser profile，复用 cookie / session / localStorage 等站点状态
-
----
-
-## 推荐工作流
-
-如果站点：
-
-- 需要登录后才能看数据
-- 需要短信验证码 / 邮箱验证码 / 2FA
-- 有滑块 / 图形验证码
-- 需要发帖 / 发布 / 提交
-
-推荐流程：
-
-1. 先判断是否必须人工接管
-2. 如果需要，就提示用户通过 VNC / noVNC 登录
-3. 用户登录完成后继续自动化
-4. 默认不要主动退出账号
-5. 默认复用 browser profile
-
-推荐提示话术：
-
-```text
-这个站点需要登录/验证码，请先通过 VNC/noVNC 接管浏览器完成登录。登录完成后回复“已登录”，我再继续后续自动化操作。
-```
-
-登录完成后建议提示：
-
-```text
-当前登录态会保存在 PinchTab 的浏览器 profile 中，后续优先复用，不需要每次重新登录。
-```
-
----
-
-## 验证
-
-```bash
-export PINCHTAB_TOKEN='你的token'
-
-curl -s -H "Authorization: Bearer $PINCHTAB_TOKEN" \
-  http://127.0.0.1:9867/health
-
-curl -s -H "Authorization: Bearer $PINCHTAB_TOKEN" \
-  -X POST http://127.0.0.1:9867/navigate \
-  -H "Content-Type: application/json" \
-  -d '{"url":"https://example.com"}'
-```
-
----
-
-## 适合放在仓库首页的卖点
-
-- 解决 Alpine / glibc / Chromium 兼容问题
-- 可直接给 OpenClaw 使用
-- 适合页面调试、截图、点击、文本提取
-- 支持容器化部署
-- 支持 VNC / noVNC 可视化接管登录
-- 支持工程化排障（token / 配置来源 / 域名策略 / 登录态复用）
+- Telegram: https://t.me/vpsbbq
